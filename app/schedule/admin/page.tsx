@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Battle = {
   id: string;
@@ -17,6 +17,13 @@ type SavedSchedule = {
   date_label: string;
   battles: Battle[];
   updated_at: string;
+};
+
+type DayStatus = {
+  dateKey: string;
+  dateLabel: string;
+  hasData: boolean;
+  battleCount: number;
 };
 
 const DEFAULT_YEAR = 2026;
@@ -80,6 +87,22 @@ function formatDateFromParts(dayRaw: string, monthRaw: string) {
   const monthName = date.toLocaleDateString("en-GB", { month: "long" });
 
   return `${weekday} ${getOrdinal(day)} ${monthName}`.toUpperCase();
+}
+
+function formatDateKeyLocal(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function formatDateLabelLocal(date: Date) {
+  const weekday = date.toLocaleDateString("en-GB", { weekday: "long" });
+  const monthName = date.toLocaleDateString("en-GB", { month: "long" });
+  const day = date.getDate();
+
+  return `${weekday} ${getOrdinal(day)} ${monthName}`;
 }
 
 function cleanUsername(value: string) {
@@ -170,6 +193,8 @@ export default function ScheduleAdminPage() {
   const [battles, setBattles] = useState<Battle[]>([]);
   const [savedSchedule, setSavedSchedule] = useState<SavedSchedule | null>(null);
   const [previewLabel, setPreviewLabel] = useState("");
+  const [dayStatuses, setDayStatuses] = useState<DayStatus[]>([]);
+  const [loadingStatuses, setLoadingStatuses] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingSaved, setLoadingSaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -177,6 +202,10 @@ export default function ScheduleAdminPage() {
   const selectedDate = useMemo(() => formatDateFromParts(day, month), [day, month]);
   const selectedDateKey = useMemo(() => getDateKey(day, month), [day, month]);
   const daysInMonth = getDaysInMonth(month);
+
+  useEffect(() => {
+    loadUpcomingStatuses();
+  }, []);
 
   async function fetchTikTokAvatar(username: string) {
     const clean = cleanUsername(username);
@@ -196,6 +225,47 @@ export default function ScheduleAdminPage() {
     } catch {
       return "";
     }
+  }
+
+  async function loadUpcomingStatuses() {
+    setLoadingStatuses(true);
+
+    const today = new Date();
+    const nextDays: DayStatus[] = [];
+
+    for (let i = 0; i <= 7; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+
+      const dateKey = formatDateKeyLocal(date);
+      const dateLabel = formatDateLabelLocal(date);
+
+      let hasData = false;
+      let battleCount = 0;
+
+      try {
+        const res = await fetch(`/api/schedule/by-date?dateKey=${dateKey}`, {
+          cache: "no-store",
+        });
+
+        const json = await res.json();
+
+        if (json.schedule?.battles?.length > 0) {
+          hasData = true;
+          battleCount = json.schedule.battles.length;
+        }
+      } catch {}
+
+      nextDays.push({
+        dateKey,
+        dateLabel,
+        hasData,
+        battleCount,
+      });
+    }
+
+    setDayStatuses(nextDays);
+    setLoadingStatuses(false);
   }
 
   async function loadSavedPreview() {
@@ -306,6 +376,7 @@ export default function ScheduleAdminPage() {
 
       setPreviewLabel(selectedDate);
       alert("Schedule saved. If this date already had battles, they were overwritten.");
+      await loadUpcomingStatuses();
     } catch {
       alert("Failed to save schedule.");
     } finally {
@@ -358,6 +429,59 @@ export default function ScheduleAdminPage() {
               <p className="mt-2 text-sm text-white/60">
                 Pick any date to preview saved data, or paste a new sheet and save. Saving the same date overwrites the old schedule completely.
               </p>
+
+              <div className="mt-5 rounded-xl border border-[#f4aa24]/30 bg-[#1d0c02]/85 p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <p className="text-xs font-black uppercase tracking-widest text-[#ffd477]">
+                    Next 7 Days
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={loadUpcomingStatuses}
+                    className="rounded-md border border-[#f4aa24]/40 bg-black/35 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-[#ffd477] transition hover:border-[#ffd477]"
+                  >
+                    Refresh
+                  </button>
+                </div>
+
+                {loadingStatuses ? (
+                  <p className="text-sm font-black uppercase tracking-widest text-white/45">
+                    Loading schedule status...
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {dayStatuses.map((item) => (
+                      <div
+                        key={item.dateKey}
+                        className={`rounded-lg border px-3 py-2 ${
+                          item.hasData
+                            ? "border-green-400/60 bg-green-500/20"
+                            : "border-[#f4aa24]/25 bg-black/35"
+                        }`}
+                      >
+                        <p
+                          className={`text-sm font-black uppercase tracking-wide ${
+                            item.hasData ? "text-green-200" : "text-white/55"
+                          }`}
+                        >
+                          {item.dateLabel}
+                        </p>
+
+                        <p
+                          className={`mt-0.5 text-xs font-black uppercase tracking-widest ${
+                            item.hasData ? "text-green-300" : "text-white/35"
+                          }`}
+                        >
+                          {item.hasData
+                            ? `${item.battleCount} battles uploaded`
+                            : "No data"}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="rounded-2xl border border-[#f4aa24]/35 bg-black/50 p-5 shadow-[0_18px_45px_rgba(0,0,0,0.35)]">
@@ -437,7 +561,8 @@ export default function ScheduleAdminPage() {
                 <button
                   type="button"
                   onClick={buildSchedule}
-                  className="rounded-lg bg-[#f4aa24] px-4 py-4 text-sm font-black uppercase tracking-widest text-[#783e12] transition hover:bg-[#ffd477]"
+                  disabled={loading}
+                  className="rounded-lg bg-[#f4aa24] px-4 py-4 text-sm font-black uppercase tracking-widest text-[#783e12] transition hover:bg-[#ffd477] disabled:opacity-40"
                 >
                   {loading ? "Building..." : "Build New Preview"}
                 </button>
