@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as htmlToImage from "html-to-image";
 import { saveAs } from "file-saver";
 
@@ -75,7 +75,9 @@ export default function NoNavBattleSchedulePage() {
 
     saveAs(
       blob,
-      `Honeybloom-Battle-Schedule-${schedule?.date_label || todayKey || "Today"}.png`
+      `Honeybloom-Battle-Schedule-${
+        schedule?.date_label || todayKey || "Today"
+      }.png`
     );
   }
 
@@ -91,7 +93,7 @@ export default function NoNavBattleSchedulePage() {
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_35%,transparent_0%,rgba(0,0,0,0.18)_55%,rgba(0,0,0,0.7)_100%)]" />
 
       <div className="relative z-10 px-3 pb-10 pt-4 sm:px-4">
-        <div className="mx-auto mb-4 flex max-w-[650px] justify-center">
+        <div className="mx-auto mb-4 flex max-w-[760px] justify-center">
           <button
             type="button"
             onClick={downloadSchedule}
@@ -103,7 +105,7 @@ export default function NoNavBattleSchedulePage() {
         </div>
 
         {loading ? (
-          <div className="mx-auto max-w-[650px] rounded-2xl border border-[#f4aa24]/35 bg-black/50 p-8 text-center font-black uppercase tracking-widest text-[#ffd477]">
+          <div className="mx-auto max-w-[760px] rounded-2xl border border-[#f4aa24]/35 bg-black/50 p-8 text-center font-black uppercase tracking-widest text-[#ffd477]">
             Loading today&apos;s battles...
           </div>
         ) : (
@@ -132,9 +134,9 @@ function SchedulePoster({
         className="mx-auto mb-0 w-[90vw] max-w-[650px] object-contain drop-shadow-[0_12px_22px_rgba(0,0,0,0.85)]"
       />
 
-      <section className="mx-auto mb-4 w-full max-w-[650px] text-center">
-        <div className="rounded-xl border border-[#f4aa24]/65 bg-black/58 px-3 py-3 shadow-[inset_0_0_16px_rgba(244,170,36,0.13),0_0_18px_rgba(0,0,0,0.5)] backdrop-blur-[2px]">
-          <h1 className="text-[34px] font-black uppercase italic leading-none tracking-tight text-[#ffd477] drop-shadow-[0_3px_0_rgba(0,0,0,0.95)] sm:text-[56px]">
+      <section className="mx-auto mb-4 w-full max-w-[760px] text-center">
+        <div className="rounded-xl border border-[#f4aa24]/65 bg-black/58 px-3 py-4 shadow-[inset_0_0_16px_rgba(244,170,36,0.13),0_0_18px_rgba(0,0,0,0.5)] backdrop-blur-[2px]">
+          <h1 className="text-[36px] font-black uppercase italic leading-none tracking-tight text-[#ffd477] drop-shadow-[0_3px_0_rgba(0,0,0,0.95)] sm:text-[64px]">
             Battle Lineup
           </h1>
 
@@ -144,7 +146,7 @@ function SchedulePoster({
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-[650px] space-y-2.5 sm:space-y-3">
+      <section className="mx-auto w-full max-w-[760px] space-y-3">
         {battles.length === 0 ? (
           <div className="rounded-xl border-2 border-dashed border-[#f4aa24]/55 bg-black/58 p-8 text-center shadow-[inset_0_0_16px_rgba(244,170,36,0.13),0_0_18px_rgba(0,0,0,0.5)] backdrop-blur-[2px]">
             <p className="font-black uppercase tracking-widest text-[#ffd477]">
@@ -152,8 +154,8 @@ function SchedulePoster({
             </p>
           </div>
         ) : (
-          battles.map((battle, index) => (
-            <BattleRow key={battle.id} battle={battle} index={index} />
+          battles.map((battle) => (
+            <BattleRow key={battle.id} battle={battle} />
           ))
         )}
       </section>
@@ -161,32 +163,75 @@ function SchedulePoster({
   );
 }
 
-function BattleRow({ battle, index }: { battle: Battle; index: number }) {
+function BattleRow({ battle }: { battle: Battle }) {
   return (
-    <div className="grid grid-cols-[45px_minmax(0,1fr)_100px_minmax(0,1fr)] items-center gap-2 rounded-xl border border-[#f4aa24]/65 bg-black/58 px-2 py-2 shadow-[inset_0_0_16px_rgba(244,170,36,0.13),0_0_18px_rgba(0,0,0,0.5)] backdrop-blur-[2px] sm:grid-cols-[58px_minmax(0,1fr)_132px_minmax(0,1fr)] sm:gap-3 sm:px-2.5">
-      <div className="flex h-10 items-center justify-center rounded-lg bg-[#f4aa24] text-[24px] font-black italic text-white shadow-[0_0_16px_rgba(244,170,36,0.45)] sm:h-12 sm:text-[31px]">
-        {index + 1}
+    <div className="rounded-xl border border-[#f4aa24]/65 bg-black/58 px-3 py-1 shadow-[inset_0_0_16px_rgba(244,170,36,0.13),0_0_18px_rgba(0,0,0,0.5)] backdrop-blur-[2px]">
+      <div className="mb-2 flex items-center justify-center translate-y-6">
+        <div className="flex h-9 min-w-[108px] items-center justify-center rounded-lg bg-[#f4aa24] px-3 shadow-[0_0_16px_rgba(244,170,36,0.45)] sm:h-10 sm:min-w-[130px]">
+          <p className="whitespace-nowrap text-[17px] font-black italic leading-none text-white drop-shadow-[0_2px_0_rgba(0,0,0,0.55)] sm:text-[23px]">
+            {battle.time || "TIME"}
+          </p>
+        </div>
       </div>
 
-      <div className="flex min-w-0 items-center gap-2">
-        <Avatar src={battle.creatorImage} name={battle.creator} />
-        <p className="min-w-0 truncate whitespace-nowrap text-[12px] font-black uppercase italic leading-tight tracking-tight text-white drop-shadow-[0_2px_0_rgba(0,0,0,0.85)] min-[390px]:text-[14px] sm:text-[20px]">
-          {displayUsername(battle.creator)}
-        </p>
-      </div>
+      <div className="grid grid-cols-[minmax(0,1fr)_52px_minmax(0,1fr)] items-center gap-2 sm:grid-cols-[minmax(0,1fr)_74px_minmax(0,1fr)] sm:gap-4">
+        <div className="flex min-w-0 flex-col items-center justify-center text-center -mt-10">
+          <Avatar src={battle.creatorImage} name={battle.creator} />
+          <AutoFitName text={displayUsername(battle.creator)} />
+        </div>
 
-      <div className="flex h-10 items-center justify-center rounded-lg bg-[#f4aa24] px-1 text-center shadow-[0_0_16px_rgba(244,170,36,0.45)] sm:h-12">
-        <p className="whitespace-nowrap text-[14px] font-black italic leading-none text-white drop-shadow-[0_2px_0_rgba(0,0,0,0.55)] min-[390px]:text-[15px] sm:text-[21px]">
-          {battle.time || "TIME"}
-        </p>
-      </div>
+        <div className="flex items-center justify-center pt-0">
+          <p className="text-[28px] font-black italic leading-none text-[#ffd477] drop-shadow-[0_3px_0_rgba(0,0,0,0.95)] sm:text-[42px]">
+            VS
+          </p>
+        </div>
 
-      <div className="flex min-w-0 items-center justify-end gap-2">
-        <p className="min-w-0 truncate whitespace-nowrap text-right text-[12px] font-black uppercase italic leading-tight tracking-tight text-white drop-shadow-[0_2px_0_rgba(0,0,0,0.85)] min-[390px]:text-[14px] sm:text-[20px]">
-          {displayUsername(battle.opponent)}
-        </p>
-        <Avatar src={battle.opponentImage} name={battle.opponent} />
+        <div className="flex min-w-0 flex-col items-center justify-center text-center -mt-10">
+          <Avatar src={battle.opponentImage} name={battle.opponent} />
+          <AutoFitName text={displayUsername(battle.opponent)} />
+        </div>
       </div>
+    </div>
+  );
+}
+
+function AutoFitName({ text }: { text: string }) {
+  const boxRef = useRef<HTMLDivElement | null>(null);
+  const textRef = useRef<HTMLParagraphElement | null>(null);
+  const [fontSize, setFontSize] = useState(18);
+
+  useEffect(() => {
+    function fitText() {
+      const box = boxRef.current;
+      const el = textRef.current;
+      if (!box || !el) return;
+
+      let size = window.innerWidth < 640 ? 14 : 18;
+      el.style.fontSize = `${size}px`;
+
+      while (el.scrollWidth > box.clientWidth && size > 7) {
+        size -= 0.5;
+        el.style.fontSize = `${size}px`;
+      }
+
+      setFontSize(size);
+    }
+
+    fitText();
+    window.addEventListener("resize", fitText);
+
+    return () => window.removeEventListener("resize", fitText);
+  }, [text]);
+
+  return (
+    <div ref={boxRef} className="mt-2 w-full min-w-0 px-1">
+      <p
+        ref={textRef}
+        style={{ fontSize }}
+        className="w-full whitespace-nowrap text-center font-black uppercase italic leading-none tracking-tight text-white drop-shadow-[0_2px_0_rgba(0,0,0,0.85)]"
+      >
+        {text}
+      </p>
     </div>
   );
 }
@@ -229,7 +274,7 @@ function Avatar({ src, name }: { src: string; name: string }) {
   }, [src, name]);
 
   return (
-    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border-2 border-[#f4aa24]/80 bg-black shadow-[0_0_14px_rgba(244,170,36,0.45)] sm:h-12 sm:w-12">
+    <div className="h-28 w-28 shrink-0 overflow-hidden rounded-full border-2 border-[#f4aa24]/80 bg-black shadow-[0_0_14px_rgba(244,170,36,0.45)] sm:h-28 sm:w-28">
       {imageSrc ? (
         <img
           src={imageSrc}
@@ -238,7 +283,7 @@ function Avatar({ src, name }: { src: string; name: string }) {
           className="h-full w-full object-cover"
         />
       ) : (
-        <div className="flex h-full w-full items-center justify-center text-[10px] font-black text-[#ffd477]">
+        <div className="flex h-full w-full items-center justify-center text-[10px] font-black text-[#ffd477] sm:text-xs">
           TT
         </div>
       )}
