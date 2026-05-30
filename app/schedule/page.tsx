@@ -80,10 +80,6 @@ function displayUsername(value: string) {
   return cleaned ? `@${cleaned}` : "";
 }
 
-function formatName(value: string) {
-  return cleanUsername(value).toUpperCase();
-}
-
 function formatTime(raw: string) {
   if (!raw) return "";
 
@@ -240,6 +236,10 @@ export default function BattleSchedulePage() {
       cacheBust: true,
       pixelRatio: 2,
       backgroundColor: "#130903",
+      style: {
+        margin: "0",
+        transform: "none",
+      },
     });
 
     if (!blob) return;
@@ -304,7 +304,7 @@ export default function BattleSchedulePage() {
               </h1>
 
               <p className="mt-2 text-sm text-white/60">
-                Paste the Honeybloom battle sheet and generate a scrollable daily battle schedule.
+                Paste the Honeybloom battle sheet and generate a daily battle schedule.
               </p>
             </div>
 
@@ -398,7 +398,7 @@ export default function BattleSchedulePage() {
           <section className="min-w-0">
             <div
               id="battle-schedule-export"
-              className="mx-auto w-full max-w-[900px] overflow-hidden rounded-2xl border border-[#f4aa24]/60 bg-[#150803] p-4 shadow-[0_22px_60px_rgba(0,0,0,0.45)] md:p-6"
+              className="mx-auto w-[900px] max-w-full overflow-visible rounded-2xl border border-[#f4aa24]/60 bg-[#150803] p-4 shadow-[0_22px_60px_rgba(0,0,0,0.45)] md:p-6"
             >
               <div className="relative overflow-hidden rounded-xl border border-[#f4aa24]/40 bg-[radial-gradient(circle_at_top,#9a5808_0%,#281004_42%,#080200_100%)] p-4 md:p-6">
                 <div className="pointer-events-none absolute inset-0 opacity-20">
@@ -412,7 +412,7 @@ export default function BattleSchedulePage() {
                     className="mx-auto mb-2 w-full max-w-[250px]"
                   />
 
-                  <div className="mx-auto mb-2 w-fit -rotate-1 bg-white px-5 py-2 shadow-[0_8px_20px_rgba(0,0,0,0.25)]">
+                  <div className="mx-auto mb-2 w-full -rotate-1 bg-white px-5 py-2 shadow-[0_8px_20px_rgba(0,0,0,0.25)]">
                     <h2
                       className="text-4xl font-black uppercase tracking-wide text-[#3a1604] md:text-6xl"
                       style={{
@@ -457,7 +457,7 @@ export default function BattleSchedulePage() {
                   </div>
                 </div>
 
-                <div className="relative z-10 max-h-[760px] space-y-2 overflow-y-auto pr-1">
+                <div className="relative z-10 space-y-2">
                   {battles.length === 0 ? (
                     <div className="rounded-xl border-2 border-dashed border-[#f4aa24]/45 bg-black/50 p-10 text-center">
                       <p className="font-black uppercase tracking-widest text-[#ffd477]">
@@ -471,23 +471,23 @@ export default function BattleSchedulePage() {
                     battles.map((battle) => (
                       <div
                         key={battle.id}
-                        className="grid grid-cols-[1fr_92px_1fr] items-center gap-2 rounded-xl border border-[#f4aa24]/70 bg-black/70 p-2 shadow-[inset_0_0_18px_rgba(244,170,36,0.16)] md:grid-cols-[1fr_120px_1fr]"
+                        className="grid grid-cols-[1.35fr_110px_1.35fr] items-center gap-2 rounded-xl border border-[#f4aa24]/70 bg-black/70 p-2 shadow-[inset_0_0_18px_rgba(244,170,36,0.16)] md:grid-cols-[1.5fr_150px_1.5fr]"
                       >
                         <div className="flex min-w-0 items-center gap-2">
                           <Avatar src={battle.creatorImage} name={battle.creator} />
-                          <p className="truncate text-sm font-black text-white md:text-xl">
+                          <p className="break-words text-[11px] font-black leading-tight text-white md:text-lg">
                             {displayUsername(battle.creator)}
                           </p>
                         </div>
 
-                        <div className="rounded-lg border border-[#ffd477] bg-[#f4aa24] px-2 py-2 text-center shadow-[0_0_18px_rgba(244,170,36,0.35)]">
-                          <p className="text-base font-black text-white md:text-2xl">
+                        <div className="rounded-lg border border-[#ffd477] bg-[#f4aa24] px-3 py-2 text-center shadow-[0_0_18px_rgba(244,170,36,0.35)]">
+                          <p className="whitespace-nowrap text-base font-black text-white md:text-2xl">
                             {battle.time || "TIME"}
                           </p>
                         </div>
 
                         <div className="flex min-w-0 items-center justify-end gap-2">
-                          <p className="truncate text-right text-sm font-black text-white md:text-xl">
+                          <p className="break-words text-right text-[11px] font-black leading-tight text-white md:text-lg">
                             {displayUsername(battle.opponent)}
                           </p>
                           <Avatar src={battle.opponentImage} name={battle.opponent} />
@@ -524,7 +524,7 @@ export default function BattleSchedulePage() {
 
 function Avatar({ src, name }: { src: string; name: string }) {
   return (
-    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-[#f4aa24]/70 bg-black md:h-12 md:w-12">
+    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-[#f4aa24]/70 bg-black md:h-12 md:w-12">
       {src ? (
         <img
           src={src}

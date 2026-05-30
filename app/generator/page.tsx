@@ -784,43 +784,21 @@ export default function BattleGeneratorPage() {
 
   function PosterPreview({
     battle,
+    scale = 0.5,
   }: {
     battle: Battle;
     scale?: number;
   }) {
-    const previewWrapRef = useRef<HTMLDivElement | null>(null);
-    const [previewScale, setPreviewScale] = useState(0.5);
-
     const combinedDateTime =
       battle.date && battle.time
         ? `${battle.date} | ${battle.time}`
         : battle.date || battle.time;
 
-    useEffect(() => {
-      const element = previewWrapRef.current;
-      if (!element) return;
-
-      const updateScale = () => {
-        const width = element.getBoundingClientRect().width;
-        setPreviewScale(width / 1080);
-      };
-
-      updateScale();
-
-      const observer = new ResizeObserver(updateScale);
-      observer.observe(element);
-
-      return () => observer.disconnect();
-    }, []);
-
     return (
-      <div
-        ref={previewWrapRef}
-        className="w-full max-w-[540px] aspect-square overflow-hidden mx-auto bg-[#fff8ea] rounded-lg"
-      >
+      <div className="w-[540px] h-[540px] max-w-full overflow-hidden mx-auto bg-[#fff8ea] rounded-lg">
         <div
           style={{
-            transform: `scale(${previewScale})`,
+            transform: `scale(${scale})`,
             transformOrigin: "top left",
           }}
         >
@@ -828,7 +806,7 @@ export default function BattleGeneratorPage() {
             ref={(el) => {
               posterRefs.current[battle.id] = el;
             }}
-            className="relative w-[1080px] h-[1080px] overflow-hidden bg-[#fff8ea]"
+            className="relative w-[1080px] h-[1090px] overflow-hidden bg-[#fff8ea]"
           >
             <img
               src={BRAND.posterBackground}
@@ -859,7 +837,7 @@ export default function BattleGeneratorPage() {
                 className="absolute left-[52px] top-[595px] w-[450px] h-[80px] flex items-center justify-center text-[#934918]"
                 style={{
                   fontFamily:
-                    "var(--font-luckiest-guy), 'Arial Black', Impact, sans-serif",
+                    "'Cooper Black', 'Luckiest Guy', 'Arial Black', Impact, serif",
                   fontWeight: 900,
                   WebkitTextStroke: "0px transparent",
                   textShadow: "none",
@@ -882,7 +860,7 @@ export default function BattleGeneratorPage() {
                 className="absolute left-[547px] top-[595px] w-[450px] h-[80px] flex items-center justify-center text-[#934918]"
                 style={{
                   fontFamily:
-                    "var(--font-luckiest-guy), 'Arial Black', Impact, sans-serif",
+                    "'Cooper Black', 'Luckiest Guy', 'Arial Black', Impact, serif",
                   fontWeight: 900,
                   WebkitTextStroke: "0px transparent",
                   textShadow: "none",
@@ -905,7 +883,7 @@ export default function BattleGeneratorPage() {
                 className="absolute top-[695px] left-[90px] w-[900px] h-[90px] flex items-center justify-center text-[#ffc83d]"
                 style={{
                   fontFamily:
-                    "var(--font-luckiest-guy), 'Arial Black', Impact, sans-serif",
+                    "'Luckiest Guy', 'Cooper Black', 'Arial Black', Impact, serif",
                   fontWeight: 900,
                   WebkitTextStroke: "6px #934918",
                   paintOrder: "stroke fill",
@@ -1116,12 +1094,19 @@ export default function BattleGeneratorPage() {
       />
 
       <div className="relative z-10 max-w-[1700px] mx-auto space-y-6">
-        <div className="flex gap-3 mb-4">
+        <div className="flex flex-wrap gap-3 mb-4">
           <a
             href="/"
             className="bg-[#f4aa24] text-[#783e12] font-black px-4 py-3 rounded-lg uppercase tracking-widest hover:bg-[#ffd477] transition"
           >
             Home
+          </a>
+
+          <a
+            href="/schedule"
+            className="bg-white/65 text-[#783e12] font-black px-4 py-3 rounded-lg uppercase tracking-widest border border-[#e6a52b]/45 hover:bg-white/90 hover:border-[#d98705] transition"
+          >
+            Schedule Generator
           </a>
         </div>
 
@@ -1313,7 +1298,7 @@ export default function BattleGeneratorPage() {
                   className="w-full h-72 bg-white/70 border border-[#e6a52b]/40 text-[#783e12] p-5 rounded-lg text-sm outline-none focus:border-[#d98705] placeholder:text-[#783e12]/35"
                 />
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
                     onClick={readRows}
