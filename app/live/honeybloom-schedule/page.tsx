@@ -166,8 +166,8 @@ function SchedulePoster({
 function BattleRow({ battle }: { battle: Battle }) {
   return (
     <div className="rounded-xl border border-[#f4aa24]/65 bg-black/58 px-3 py-1 shadow-[inset_0_0_16px_rgba(244,170,36,0.13),0_0_18px_rgba(0,0,0,0.5)] backdrop-blur-[2px]">
-      <div className="mb-2 flex items-center justify-center translate-y-6">
-        <div className="flex h-9 min-w-[108px] items-center justify-center rounded-lg bg-[#f4aa24] px-3 shadow-[0_0_16px_rgba(244,170,36,0.45)] sm:h-10 sm:min-w-[130px]">
+      <div className="mb-2 flex items-center justify-center translate-y-1">
+        <div className="flex h-7 min-w-[108px] items-center justify-center rounded-lg bg-[#f4aa24] px-3 shadow-[0_0_16px_rgba(244,170,36,0.45)] sm:h-10 sm:min-w-[130px]">
           <p className="whitespace-nowrap text-[17px] font-black italic leading-none text-white drop-shadow-[0_2px_0_rgba(0,0,0,0.55)] sm:text-[23px]">
             {battle.time || "TIME"}
           </p>

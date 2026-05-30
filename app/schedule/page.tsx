@@ -185,27 +185,27 @@ function SchedulePoster({
 function BattleRow({ battle }: { battle: Battle }) {
   return (
     <div className="rounded-xl border border-[#f4aa24]/65 bg-black/58 px-3 py-1 shadow-[inset_0_0_16px_rgba(244,170,36,0.13),0_0_18px_rgba(0,0,0,0.5)] backdrop-blur-[2px]">
-      <div className="mb-2 flex translate-y-6 items-center justify-center">
-        <div className="flex h-9 min-w-[108px] items-center justify-center rounded-lg bg-[#f4aa24] px-3 shadow-[0_0_16px_rgba(244,170,36,0.45)] sm:h-10 sm:min-w-[130px]">
-          <p className="whitespace-nowrap text-[17px] font-black italic leading-none text-white drop-shadow-[0_2px_0_rgba(0,0,0,0.55)] sm:text-[23px]">
+      <div className="mb-2 flex items-center justify-center translate-y-1">
+        <div className="flex h-7 min-w-[108px] items-center justify-center rounded-lg bg-[#f4aa24] px-3 shadow-[0_0_16px_rgba(244,170,36,0.45)] sm:h-10 sm:min-w-[130px]">
+          <p className="whitespace-nowrap text-[17px] font-black italic leading-none text-white sm:text-[23px]">
             {battle.time || "TIME"}
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-[minmax(0,1fr)_52px_minmax(0,1fr)] items-center gap-2 sm:grid-cols-[minmax(0,1fr)_74px_minmax(0,1fr)] sm:gap-4">
-        <div className="flex min-w-0 -mt-10 flex-col items-center justify-center text-center">
+        <div className="flex min-w-0 flex-col items-center justify-center text-center -mt-10">
           <Avatar src={battle.creatorImage} name={battle.creator} />
           <AutoFitName text={displayUsername(battle.creator)} />
         </div>
 
         <div className="flex items-center justify-center pt-0">
-          <p className="text-[28px] font-black italic leading-none text-[#ffd477] drop-shadow-[0_3px_0_rgba(0,0,0,0.95)] sm:text-[42px]">
+          <p className="text-[28px] font-black italic text-[#ffd477] sm:text-[42px]">
             VS
           </p>
         </div>
 
-        <div className="flex min-w-0 -mt-10 flex-col items-center justify-center text-center">
+        <div className="flex min-w-0 flex-col items-center justify-center text-center -mt-10">
           <Avatar src={battle.opponentImage} name={battle.opponent} />
           <AutoFitName text={displayUsername(battle.opponent)} />
         </div>
