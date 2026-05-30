@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 export function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
 
-  const publicRoutes = ["/login", "/live/8f3k2j9m-sunset"];
+  const publicRoutes = ["/login", "/live/honeybloom-schedule"];
 
   const isPublic = publicRoutes.some((route) => path.startsWith(route));
 
@@ -21,5 +21,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/generator/:path*", "/events/:path*"],
+  matcher: ["/", "/generator/:path*", "/schedule/:path*"],
 };

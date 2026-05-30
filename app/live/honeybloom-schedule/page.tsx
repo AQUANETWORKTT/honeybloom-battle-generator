@@ -30,7 +30,7 @@ function displayUsername(value: string) {
   return cleaned ? `@${cleaned}` : "";
 }
 
-export default function PublicBattleSchedulePage() {
+export default function NoNavBattleSchedulePage() {
   const [schedule, setSchedule] = useState<SavedSchedule | null>(null);
   const [todayKey, setTodayKey] = useState("");
   const [loading, setLoading] = useState(true);
@@ -75,9 +75,7 @@ export default function PublicBattleSchedulePage() {
 
     saveAs(
       blob,
-      `Honeybloom-Battle-Schedule-${
-        schedule?.date_label || todayKey || "Today"
-      }.png`
+      `Honeybloom-Battle-Schedule-${schedule?.date_label || todayKey || "Today"}.png`
     );
   }
 
@@ -92,29 +90,8 @@ export default function PublicBattleSchedulePage() {
       <div className="fixed inset-0 bg-gradient-to-b from-black/5 via-black/10 to-black/65" />
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_35%,transparent_0%,rgba(0,0,0,0.18)_55%,rgba(0,0,0,0.7)_100%)]" />
 
-      <div className="relative z-10 mx-auto max-w-[1200px] px-3 pb-10 pt-4 sm:px-4">
-        <div className="mb-4 flex flex-wrap gap-3">
-          <a
-            href="/"
-            className="rounded-lg bg-[#f4aa24] px-4 py-3 font-black uppercase tracking-widest text-[#783e12] transition hover:bg-[#ffd477]"
-          >
-            Home
-          </a>
-
-          <a
-            href="/schedule/admin"
-            className="rounded-lg border border-[#f4aa24]/50 bg-black/35 px-4 py-3 font-black uppercase tracking-widest text-[#ffd477] transition hover:border-[#ffd477]"
-          >
-            Upload Schedule
-          </a>
-
-          <a
-            href="/live/honeybloom-schedule"
-            className="rounded-lg border border-[#f4aa24]/50 bg-black/35 px-4 py-3 font-black uppercase tracking-widest text-[#ffd477] transition hover:border-[#ffd477]"
-          >
-            No-Nav Public Link
-          </a>
-
+      <div className="relative z-10 px-3 pb-10 pt-4 sm:px-4">
+        <div className="mx-auto mb-4 flex max-w-[650px] justify-center">
           <button
             type="button"
             onClick={downloadSchedule}
@@ -126,7 +103,7 @@ export default function PublicBattleSchedulePage() {
         </div>
 
         {loading ? (
-          <div className="rounded-2xl border border-[#f4aa24]/35 bg-black/50 p-8 text-center font-black uppercase tracking-widest text-[#ffd477]">
+          <div className="mx-auto max-w-[650px] rounded-2xl border border-[#f4aa24]/35 bg-black/50 p-8 text-center font-black uppercase tracking-widest text-[#ffd477]">
             Loading today&apos;s battles...
           </div>
         ) : (
