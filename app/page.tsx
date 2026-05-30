@@ -1,65 +1,82 @@
-import Image from "next/image";
+import Link from "next/link";
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <main className="relative min-h-screen overflow-hidden bg-[#fff8ea] px-4 py-10">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,#fff1c8_0%,#fff8ea_45%,#f8eedb_100%)]" />
+
+      {/* Honeycomb top left */}
+      <img
+        src="/honeycomb-corner.png"
+        alt=""
+        className="pointer-events-none absolute -left-6 -top-6 w-72 opacity-95"
+        style={{
+          WebkitMaskImage:
+            "linear-gradient(to right, transparent 0%, black 18%, black 82%, transparent 100%), linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)",
+          WebkitMaskComposite: "source-in",
+          maskImage:
+            "linear-gradient(to right, transparent 0%, black 18%, black 82%, transparent 100%), linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)",
+          maskComposite: "intersect",
+        }}
+      />
+
+      {/* Honeycomb bottom right */}
+      <img
+        src="/honeycomb-corner.png"
+        alt=""
+        className="pointer-events-none absolute -bottom-6 -right-6 w-80 rotate-180 opacity-95"
+        style={{
+          WebkitMaskImage:
+            "linear-gradient(to right, transparent 0%, black 18%, black 82%, transparent 100%), linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)",
+          WebkitMaskComposite: "source-in",
+          maskImage:
+            "linear-gradient(to right, transparent 0%, black 18%, black 82%, transparent 100%), linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)",
+          maskComposite: "intersect",
+        }}
+      />
+
+      {/* Extra soft decorations */}
+      <div className="pointer-events-none absolute right-20 top-36 text-4xl text-[#efb44a]/45">
+        ✦
+      </div>
+      <div className="pointer-events-none absolute left-12 bottom-24 text-5xl text-[#efb44a]/35">
+        ✦
+      </div>
+
+      <div className="relative z-10 mx-auto flex min-h-[calc(100vh-80px)] w-full max-w-5xl flex-col items-center justify-center text-center">
+        <img
+          src="/honeybloom-logo.png"
+          alt="Honeybloom Agency"
+          className="mb-8 w-full max-w-[380px]"
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+
+        <h1 className="text-5xl font-black uppercase tracking-wide text-[#783e12] drop-shadow-sm md:text-6xl">
+          Honeybloom Hub
+        </h1>
+
+        <div className="my-6 flex items-center gap-4">
+          <div className="h-px w-28 bg-[#e6a52b]" />
+          <div className="text-[#e6a52b]">✿</div>
+          <div className="h-px w-28 bg-[#e6a52b]" />
+        </div>
+
+        <p className="mb-10 text-xl font-medium text-[#783e12]/85">
+          Battle poster generator.
+        </p>
+
+        <Link
+          href="/generator"
+          className="group w-full max-w-xl rounded-[28px] border-2 border-white/80 bg-gradient-to-br from-[#ffe7a8] via-[#ffd477] to-[#f4aa24] px-8 py-10 text-center shadow-[0_18px_45px_rgba(120,62,18,0.20)] transition hover:scale-[1.02] hover:shadow-[0_22px_55px_rgba(120,62,18,0.28)]"
+        >
+          <h2 className="text-3xl font-black uppercase tracking-wide text-[#783e12]">
+            Poster Generator
+          </h2>
+
+          <p className="mt-4 text-lg font-medium text-[#783e12]/85">
+            Create single and bulk battle posters.
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+        </Link>
+      </div>
+    </main>
   );
 }
