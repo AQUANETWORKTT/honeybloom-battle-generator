@@ -12,7 +12,16 @@ export const metadata: Metadata = {
         url: "/honeybloom-share.jpg",
         width: 1200,
         height: 630,
+        alt: "Honey Bloom Battle Schedule",
       },
     ],
   },
 };
+
+export default function HoneyBloomScheduleLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return children;
+}
