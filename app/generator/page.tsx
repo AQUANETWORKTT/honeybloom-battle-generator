@@ -27,6 +27,41 @@ const BRAND = {
 
 const DEFAULT_YEAR = 2026;
 
+const POSTER_FONT_CSS = `
+@font-face {
+  font-family: "Poster Cooper Black";
+  src: url("/fonts/CooperBlack.woff2") format("woff2"),
+       url("/fonts/CooperBlack.ttf") format("truetype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Poster Luckiest Guy";
+  src: url("/fonts/LuckiestGuy-Regular.woff2") format("woff2"),
+       url("/fonts/LuckiestGuy-Regular.ttf") format("truetype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: block;
+}
+
+.poster-export,
+.poster-export * {
+  font-synthesis: none !important;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+`;
+
+const POSTER_NAME_FONT =
+  '"Poster Cooper Black", "Cooper Black", "Poster Luckiest Guy", "Luckiest Guy", "Arial Black", Impact, serif';
+
+const POSTER_DATE_FONT =
+  '"Poster Luckiest Guy", "Luckiest Guy", "Poster Cooper Black", "Cooper Black", "Arial Black", Impact, serif';
+
+
 const MONTHS = [
   { label: "January", value: 0 },
   { label: "February", value: 1 },
@@ -158,6 +193,14 @@ function cleanFileName(value: string) {
     .replaceAll("—", "-")
     .replaceAll(",", "")
     .replaceAll("@", "");
+}
+
+
+function addCacheBustToImageUrl(url: string, key?: string | number) {
+  if (!url || url.startsWith("data:") || url.startsWith("blob:")) return url;
+
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}avatarRefresh=${key || Date.now()}`;
 }
 
 function TextInput({
@@ -406,19 +449,34 @@ export default function BattleGeneratorPage() {
   }
 
   async function fetchTikTokAvatar(username: string) {
-    if (!username) return "";
+    const cleanUsername = username.replace("@", "").trim().toLowerCase();
+    if (!cleanUsername) return "";
+
+    const refreshKey = Date.now();
 
     try {
-      const res = await fetch("/api/tiktok-avatar", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username }),
-      });
+      const res = await fetch(
+        `/api/tiktok-avatar?username=${encodeURIComponent(
+          cleanUsername
+        )}&refresh=${refreshKey}`,
+        {
+          method: "POST",
+          cache: "no-store",
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
+          },
+          body: JSON.stringify({
+            username: cleanUsername,
+            forceRefresh: true,
+            refresh: refreshKey,
+          }),
+        }
+      );
 
       const json = await res.json();
-      return json.avatar || "";
+      return addCacheBustToImageUrl(json.avatar || "", refreshKey);
     } catch {
       return "";
     }
@@ -435,6 +493,39 @@ export default function BattleGeneratorPage() {
     if (!avatar) return;
 
     updateSingleBattle({ [field]: avatar });
+  }
+
+  async function autoFillBattleAvatar(
+    id: string,
+    field: "image1" | "image2",
+    username: string
+  ) {
+    const cleanUsername = username.replace("@", "").trim();
+    if (!cleanUsername) return;
+
+    const avatar = await fetchTikTokAvatar(cleanUsername);
+    if (!avatar) return;
+
+    updateBattle(id, { [field]: avatar });
+  }
+
+  async function refreshTikTokAvatar(
+    battle: Battle,
+    field: "image1" | "image2",
+    single = false
+  ) {
+    const username = field === "image1" ? battle.name1 : battle.name2;
+    const cleanUsername = username.replace("@", "").trim();
+    if (!cleanUsername) return;
+
+    const avatar = await fetchTikTokAvatar(cleanUsername);
+    if (!avatar) return;
+
+    if (single) {
+      updateSingleBattle({ [field]: avatar });
+    } else {
+      updateBattle(battle.id, { [field]: avatar });
+    }
   }
 
   function uploadImageFile(
@@ -599,17 +690,39 @@ export default function BattleGeneratorPage() {
     setLoading(false);
   }
 
-  async function makePosterBlob(battle: Battle) {
+  async function waitForPosterAssets(node: HTMLElement) {
     await document.fonts.ready;
 
+    const images = Array.from(node.querySelectorAll("img"));
+
+    await Promise.all(
+      images.map((image) => {
+        if (image.complete && image.naturalWidth > 0) return Promise.resolve();
+
+        return new Promise<void>((resolve) => {
+          image.onload = () => resolve();
+          image.onerror = () => resolve();
+        });
+      })
+    );
+
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+  }
+
+  async function makePosterBlob(battle: Battle) {
     const node = posterRefs.current[battle.id];
     if (!node) return null;
 
     try {
+      await waitForPosterAssets(node);
+
+      const fontEmbedCSS = await htmlToImage.getFontEmbedCSS(node);
+
       const blob = await htmlToImage.toBlob(node, {
         cacheBust: true,
         pixelRatio: 2,
         backgroundColor: "#fff8ea",
+        fontEmbedCSS,
       });
 
       return blob;
@@ -764,12 +877,23 @@ export default function BattleGeneratorPage() {
           Drag photo here or click to choose
         </p>
 
-        <label
-          htmlFor={inputId}
-          className="mt-3 inline-block cursor-pointer bg-[#f4aa24] text-[#783e12] font-black px-4 py-2 rounded uppercase text-xs"
-        >
-          Choose Image
-        </label>
+        <div className="mt-3 grid grid-cols-1 gap-2">
+          <label
+            htmlFor={inputId}
+            className="inline-block cursor-pointer bg-[#f4aa24] text-[#783e12] font-black px-4 py-2 rounded uppercase text-xs"
+          >
+            Choose Image
+          </label>
+
+          <button
+            type="button"
+            onClick={() => refreshTikTokAvatar(battle, field, single)}
+            disabled={!(field === "image1" ? battle.name1 : battle.name2)}
+            className="bg-white/75 disabled:opacity-40 disabled:cursor-not-allowed text-[#783e12] font-black px-4 py-2 rounded uppercase text-xs border border-[#e6a52b]/45 hover:bg-white"
+          >
+            Refresh TikTok Photo
+          </button>
+        </div>
 
         <input
           id={inputId}
@@ -806,7 +930,7 @@ export default function BattleGeneratorPage() {
             ref={(el) => {
               posterRefs.current[battle.id] = el;
             }}
-            className="relative w-[1080px] h-[1090px] overflow-hidden bg-[#fff8ea]"
+            className="poster-export relative w-[1080px] h-[1090px] overflow-hidden bg-[#fff8ea]"
           >
             <img
               src={BRAND.posterBackground}
@@ -836,8 +960,7 @@ export default function BattleGeneratorPage() {
               <div
                 className="absolute left-[52px] top-[595px] w-[450px] h-[80px] flex items-center justify-center text-[#934918]"
                 style={{
-                  fontFamily:
-                    "'Cooper Black', 'Luckiest Guy', 'Arial Black', Impact, serif",
+                  fontFamily: POSTER_NAME_FONT,
                   fontWeight: 900,
                   WebkitTextStroke: "0px transparent",
                   textShadow: "none",
@@ -859,8 +982,7 @@ export default function BattleGeneratorPage() {
               <div
                 className="absolute left-[547px] top-[595px] w-[450px] h-[80px] flex items-center justify-center text-[#934918]"
                 style={{
-                  fontFamily:
-                    "'Cooper Black', 'Luckiest Guy', 'Arial Black', Impact, serif",
+                  fontFamily: POSTER_NAME_FONT,
                   fontWeight: 900,
                   WebkitTextStroke: "0px transparent",
                   textShadow: "none",
@@ -882,8 +1004,7 @@ export default function BattleGeneratorPage() {
               <div
                 className="absolute top-[695px] left-[90px] w-[900px] h-[90px] flex items-center justify-center text-[#ffc83d]"
                 style={{
-                  fontFamily:
-                    "'Luckiest Guy', 'Cooper Black', 'Arial Black', Impact, serif",
+                  fontFamily: POSTER_DATE_FONT,
                   fontWeight: 900,
                   WebkitTextStroke: "6px #934918",
                   paintOrder: "stroke fill",
@@ -935,7 +1056,15 @@ export default function BattleGeneratorPage() {
             onChange={(value) =>
               updateBattle(selectedBattle.id, {
                 name1: formatName(value),
+                image1: "",
               })
+            }
+            onBlur={() =>
+              autoFillBattleAvatar(
+                selectedBattle.id,
+                "image1",
+                selectedBattle.name1
+              )
             }
           />
 
@@ -945,7 +1074,15 @@ export default function BattleGeneratorPage() {
             onChange={(value) =>
               updateBattle(selectedBattle.id, {
                 name2: formatName(value),
+                image2: "",
               })
+            }
+            onBlur={() =>
+              autoFillBattleAvatar(
+                selectedBattle.id,
+                "image2",
+                selectedBattle.name2
+              )
             }
           />
 
@@ -1063,6 +1200,7 @@ export default function BattleGeneratorPage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#fff8ea] text-[#783e12] p-8">
+      <style>{POSTER_FONT_CSS}</style>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,#fff1c8_0%,#fff8ea_45%,#f8eedb_100%)]" />
 
       <img
