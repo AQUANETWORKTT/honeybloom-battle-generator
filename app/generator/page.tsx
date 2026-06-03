@@ -56,10 +56,10 @@ const POSTER_FONT_CSS = `
 `;
 
 const POSTER_NAME_FONT =
-  '"Poster Cooper Black", "Cooper Black", "Poster Luckiest Guy", "Luckiest Guy", "Arial Black", Impact, serif';
+  '"Poster Cooper Black", "Poster Luckiest Guy", serif';
 
 const POSTER_DATE_FONT =
-  '"Poster Luckiest Guy", "Luckiest Guy", "Poster Cooper Black", "Cooper Black", "Arial Black", Impact, serif';
+  '"Poster Luckiest Guy", "Poster Cooper Black", serif';
 
 
 const MONTHS = [
