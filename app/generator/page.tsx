@@ -1004,7 +1004,7 @@ export default function BattleGeneratorPage() {
 
             {combinedDateTime && (
               <div
-                className="absolute top-[695px] left-[90px] w-[900px] h-[90px] flex items-center justify-center text-[#ffc83d]"
+                className="absolute top-[690px] left-[90px] w-[900px] h-[90px] flex items-center justify-center text-[#ffc83d]"
                 style={{
                   fontFamily: POSTER_DATE_FONT,
                   fontWeight: 900,
@@ -1019,7 +1019,14 @@ export default function BattleGeneratorPage() {
                   )`,
                 }}
               >
-                <span className="leading-none text-center whitespace-nowrap">
+                <span
+                  className="text-center whitespace-nowrap"
+                  style={{
+                    lineHeight: "1",
+                    display: "block",
+                    transform: "translateY(4px)",
+                  }}
+                >
                   {combinedDateTime.toUpperCase()}
                 </span>
               </div>
