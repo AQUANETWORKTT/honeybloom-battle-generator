@@ -30,8 +30,7 @@ const DEFAULT_YEAR = 2026;
 const POSTER_FONT_CSS = `
 @font-face {
   font-family: "Poster Cooper Black";
-  src: url("/fonts/CooperBlack.woff2") format("woff2"),
-       url("/fonts/CooperBlack.ttf") format("truetype");
+  src: url("/fonts/CooperBlack.ttf") format("truetype");
   font-weight: 900;
   font-style: normal;
   font-display: block;
@@ -39,8 +38,7 @@ const POSTER_FONT_CSS = `
 
 @font-face {
   font-family: "Poster Luckiest Guy";
-  src: url("/fonts/LuckiestGuy-Regular.woff2") format("woff2"),
-       url("/fonts/LuckiestGuy-Regular.ttf") format("truetype");
+  src: url("/fonts/LuckiestGuy-Regular.ttf") format("truetype");
   font-weight: 900;
   font-style: normal;
   font-display: block;
@@ -56,11 +54,10 @@ const POSTER_FONT_CSS = `
 `;
 
 const POSTER_NAME_FONT =
-  '"Poster Cooper Black", "Poster Luckiest Guy", serif';
+  '"Poster Cooper Black", Arial Black, Arial, sans-serif';
 
 const POSTER_DATE_FONT =
-  '"Poster Luckiest Guy", "Poster Cooper Black", serif';
-
+  '"Poster Luckiest Guy", Arial Black, Arial, sans-serif';
 
 const MONTHS = [
   { label: "January", value: 0 },
@@ -195,7 +192,6 @@ function cleanFileName(value: string) {
     .replaceAll("@", "");
 }
 
-
 function addCacheBustToImageUrl(url: string, key?: string | number) {
   if (!url || url.startsWith("data:") || url.startsWith("blob:")) return url;
 
@@ -326,7 +322,7 @@ export default function BattleGeneratorPage() {
   const [paste, setPaste] = useState("");
   const [singlePaste, setSinglePaste] = useState("");
   const [singleBattle, setSingleBattle] = useState<Battle>(() =>
-    createBattle(`single-${stableId}`)
+    createBattle(`single-${stableId}`),
   );
   const [singleDay, setSingleDay] = useState("");
   const [singleMonth, setSingleMonth] = useState("4");
@@ -418,12 +414,12 @@ export default function BattleGeneratorPage() {
   function updateBattle(id: string, changes: Partial<Battle>) {
     setBattles((prev) =>
       prev.map((battle) =>
-        battle.id === id ? { ...battle, ...changes } : battle
-      )
+        battle.id === id ? { ...battle, ...changes } : battle,
+      ),
     );
 
     setSingleBattle((prev) =>
-      prev.id === id ? { ...prev, ...changes } : prev
+      prev.id === id ? { ...prev, ...changes } : prev,
     );
   }
 
@@ -457,7 +453,7 @@ export default function BattleGeneratorPage() {
     try {
       const res = await fetch(
         `/api/tiktok-avatar?username=${encodeURIComponent(
-          cleanUsername
+          cleanUsername,
         )}&refresh=${refreshKey}`,
         {
           method: "POST",
@@ -472,7 +468,7 @@ export default function BattleGeneratorPage() {
             forceRefresh: true,
             refresh: refreshKey,
           }),
-        }
+        },
       );
 
       const json = await res.json();
@@ -484,7 +480,7 @@ export default function BattleGeneratorPage() {
 
   async function autoFillSingleAvatar(
     field: "image1" | "image2",
-    username: string
+    username: string,
   ) {
     const cleanUsername = username.replace("@", "").trim();
     if (!cleanUsername) return;
@@ -498,7 +494,7 @@ export default function BattleGeneratorPage() {
   async function autoFillBattleAvatar(
     id: string,
     field: "image1" | "image2",
-    username: string
+    username: string,
   ) {
     const cleanUsername = username.replace("@", "").trim();
     if (!cleanUsername) return;
@@ -512,7 +508,7 @@ export default function BattleGeneratorPage() {
   async function refreshTikTokAvatar(
     battle: Battle,
     field: "image1" | "image2",
-    single = false
+    single = false,
   ) {
     const username = field === "image1" ? battle.name1 : battle.name2;
     const cleanUsername = username.replace("@", "").trim();
@@ -532,7 +528,7 @@ export default function BattleGeneratorPage() {
     file: File,
     id: string,
     field: "image1" | "image2",
-    single = false
+    single = false,
   ) {
     const reader = new FileReader();
 
@@ -553,7 +549,7 @@ export default function BattleGeneratorPage() {
     e: React.ChangeEvent<HTMLInputElement>,
     id: string,
     field: "image1" | "image2",
-    single = false
+    single = false,
   ) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -565,7 +561,7 @@ export default function BattleGeneratorPage() {
     e: React.DragEvent<HTMLDivElement>,
     id: string,
     field: "image1" | "image2",
-    single = false
+    single = false,
   ) {
     e.preventDefault();
 
@@ -579,7 +575,9 @@ export default function BattleGeneratorPage() {
     const parts = row.split(/	+/);
 
     const selectedDate =
-      singleBattle.date || massDate || formatDateFromParts(singleDay, singleMonth);
+      singleBattle.date ||
+      massDate ||
+      formatDateFromParts(singleDay, singleMonth);
 
     // Honeybloom sheet format:
     // A = manager, B = predicted diamonds ignored, C = creator username,
@@ -691,6 +689,8 @@ export default function BattleGeneratorPage() {
   }
 
   async function waitForPosterAssets(node: HTMLElement) {
+    await document.fonts.load(`900 64px ${POSTER_NAME_FONT}`);
+    await document.fonts.load(`900 58px ${POSTER_DATE_FONT}`);
     await document.fonts.ready;
 
     const images = Array.from(node.querySelectorAll("img"));
@@ -703,9 +703,10 @@ export default function BattleGeneratorPage() {
           image.onload = () => resolve();
           image.onerror = () => resolve();
         });
-      })
+      }),
     );
 
+    await new Promise((resolve) => requestAnimationFrame(resolve));
     await new Promise((resolve) => requestAnimationFrame(resolve));
   }
 
@@ -761,11 +762,12 @@ export default function BattleGeneratorPage() {
 
     setSingleBattle(battle);
 
-    setTimeout(async () => {
-      const blob = await makePosterBlob(battle);
-      if (!blob) return;
-      saveAs(blob, getPosterFileName(battle));
-    }, 100);
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+
+    const blob = await makePosterBlob(battle);
+    if (!blob) return;
+    saveAs(blob, getPosterFileName(battle));
   }
 
   async function downloadAllPosters() {
@@ -802,7 +804,7 @@ export default function BattleGeneratorPage() {
 
       if (!picker.showDirectoryPicker) {
         alert(
-          "Save to Folder only works in Chrome or Edge. Use Download ZIP instead."
+          "Save to Folder only works in Chrome or Edge. Use Download ZIP instead.",
         );
         return;
       }
@@ -815,12 +817,12 @@ export default function BattleGeneratorPage() {
 
         const managerHandle = await rootHandle.getDirectoryHandle(
           battle.manager || "UNKNOWN",
-          { create: true }
+          { create: true },
         );
 
         const fileHandle = await managerHandle.getFileHandle(
           getPosterFileName(battle),
-          { create: true }
+          { create: true },
         );
 
         const writable = await fileHandle.createWritable();
@@ -1063,7 +1065,7 @@ export default function BattleGeneratorPage() {
               autoFillBattleAvatar(
                 selectedBattle.id,
                 "image1",
-                selectedBattle.name1
+                selectedBattle.name1,
               )
             }
           />
@@ -1081,7 +1083,7 @@ export default function BattleGeneratorPage() {
               autoFillBattleAvatar(
                 selectedBattle.id,
                 "image2",
-                selectedBattle.name2
+                selectedBattle.name2,
               )
             }
           />
@@ -1255,7 +1257,8 @@ export default function BattleGeneratorPage() {
             </h1>
 
             <p className="text-[#783e12]/60 text-sm mt-2">
-              Single posters by default. Mass generator is kept in its own section.
+              Single posters by default. Mass generator is kept in its own
+              section.
             </p>
           </div>
 
@@ -1483,7 +1486,8 @@ export default function BattleGeneratorPage() {
 
                 <p className="text-[#783e12]/55 text-xs mt-2">
                   Format: manager, predicted diamonds, creator username, ignored
-                  column, time, ignored column, opponent name, agency. Select the date above first.
+                  column, time, ignored column, opponent name, agency. Select
+                  the date above first.
                 </p>
               </div>
 
