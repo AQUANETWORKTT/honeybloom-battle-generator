@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { boxStyle, ELEMENT_LABELS, FontEditor, LayoutHandles, textStyle, usePosterLayout, type ElementKey } from "./poster-layout";
 import * as htmlToImage from "html-to-image";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
@@ -44,6 +45,7 @@ const POSTER_FONT_CSS = `
   font-display: block;
 }
 
+@font-face { font-family: "Norwester"; src: url("/fonts/Norwester.otf") format("opentype"); font-weight: 900; font-display: block; }
 .poster-export,
 .poster-export * {
   font-synthesis: none !important;
@@ -313,10 +315,159 @@ function TimeSelect({
   );
 }
 
+  function PosterPreview({
+    battle: sourceBattle,
+    scale = 0.5,
+    editable = false,
+    layoutEditor, selectedElement, setSelectedElement, posterRefs,
+  }: {
+    battle: Battle;
+    scale?: number;
+    editable?: boolean;
+    layoutEditor: ReturnType<typeof usePosterLayout>;
+    selectedElement: ElementKey;
+    setSelectedElement: (key: ElementKey) => void;
+    posterRefs: { current: Record<string, HTMLDivElement | null> };
+  }) {
+    const battle = editable ? { ...sourceBattle, name1: sourceBattle.name1 || "CREATOR 1", name2: sourceBattle.name2 || "CREATOR 2", date: sourceBattle.date || "DATE", time: sourceBattle.time || "TIME" } : sourceBattle;
+    const combinedDateTime =
+      battle.date && battle.time
+        ? `${battle.date} | ${battle.time}`
+        : battle.date || battle.time;
+
+    return (
+      <div className="w-[540px] h-[545px] max-w-full overflow-hidden mx-auto bg-[#fff8ea] rounded-lg">
+        <div
+          style={{
+            transform: `scale(${scale})`,
+            transformOrigin: "top left",
+          }}
+        >
+          <div
+            ref={(el) => {
+              if (!editable) posterRefs.current[battle.id] = el;
+            }}
+            className="poster-export relative w-[1080px] h-[1090px] overflow-hidden bg-[#fff8ea]"
+          >
+            <img
+              src={layoutEditor.background}
+              className="absolute inset-0 w-full h-full object-cover"
+              alt=""
+            />
+
+            {battle.image1 && (
+              <img
+                crossOrigin="anonymous"
+                src={battle.image1}
+                className="absolute rounded-full object-cover" style={boxStyle(layoutEditor.layout, "avatar1")}
+                alt=""
+              />
+            )}
+
+            {battle.image2 && (
+              <img
+                crossOrigin="anonymous"
+                src={battle.image2}
+                className="absolute rounded-full object-cover" style={boxStyle(layoutEditor.layout, "avatar2")}
+                alt=""
+              />
+            )}
+
+            {battle.name1 && (
+              <div
+                className="absolute flex items-center justify-center text-[#934918]"
+                style={{
+                  ...boxStyle(layoutEditor.layout, "username1"),
+                  fontFamily: POSTER_NAME_FONT,
+                  fontWeight: 900,
+                  WebkitTextStroke: "0px transparent",
+                  textShadow: "none",
+                  letterSpacing: "-1px",
+                  fontSize: `clamp(
+                    26px,
+                    ${70 - battle.name1.length * 1.1}px,
+                    26px
+                  )`,
+                  ...textStyle(layoutEditor.typography.username1),
+                }}
+              >
+                <span className="leading-none">
+                  {layoutEditor.typography.username1.uppercase ? battle.name1.toUpperCase() : battle.name1}
+                </span>
+              </div>
+            )}
+
+            {battle.name2 && (
+              <div
+                className="absolute flex items-center justify-center text-[#934918]"
+                style={{
+                  ...boxStyle(layoutEditor.layout, "username2"),
+                  fontFamily: POSTER_NAME_FONT,
+                  fontWeight: 900,
+                  WebkitTextStroke: "0px transparent",
+                  textShadow: "none",
+                  letterSpacing: "-1px",
+                  fontSize: `clamp(
+                    26px,
+                    ${70 - battle.name2.length * 1.1}px,
+                    26px
+                  )`,
+                  ...textStyle(layoutEditor.typography.username2),
+                }}
+              >
+                <span className="leading-none">
+                  {layoutEditor.typography.username2.uppercase ? battle.name2.toUpperCase() : battle.name2}
+                </span>
+              </div>
+            )}
+
+            {combinedDateTime && (
+              <div
+                className="absolute flex items-center justify-center overflow-hidden text-[#ffc83d]"
+                style={{
+                  ...boxStyle(layoutEditor.layout, "date"),
+                  fontFamily: POSTER_DATE_FONT,
+                  fontWeight: 900,
+                  WebkitTextStroke: "6px #934918",
+                  paintOrder: "stroke fill",
+                  textShadow: "2px 2px 0px #934918",
+                  letterSpacing: "1px",
+                  fontSize: `clamp(
+                    32px,
+                    ${62 - combinedDateTime.length * 1.05}px,
+                    58px
+                  )`,
+                  ...textStyle(layoutEditor.typography.date),
+                }}
+              >
+                <span
+                  className="text-center whitespace-nowrap"
+                  style={{
+                    lineHeight: "1.15",
+                    display: "block",
+                    paddingTop: "8px",
+                    transform: "translateY(0px)",
+                  }}
+                >
+                  {layoutEditor.typography.date.uppercase ? combinedDateTime.toUpperCase() : combinedDateTime}
+                </span>
+              </div>
+            )}
+            {editable && <LayoutHandles layout={layoutEditor.layout} selected={selectedElement} onSelect={setSelectedElement} onUpdate={layoutEditor.update} scale={scale} />}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+
 export default function BattleGeneratorPage() {
   const stableId = useId().replaceAll(":", "");
   const posterRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
+  const layoutEditor = usePosterLayout();
+  const [editingLayout, setEditingLayout] = useState(false);
+  const [selectedElement, setSelectedElement] = useState<ElementKey>("avatar1");
   const [activeMode, setActiveMode] = useState<Mode>("single");
 
   const [paste, setPaste] = useState("");
@@ -335,6 +486,7 @@ export default function BattleGeneratorPage() {
   const [selectedId, setSelectedId] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [exportStatus, setExportStatus] = useState("");
 
   const selectedBattle = battles.find((b) => b.id === selectedId) || null;
 
@@ -488,7 +640,11 @@ export default function BattleGeneratorPage() {
     const avatar = await fetchTikTokAvatar(cleanUsername);
     if (!avatar) return;
 
-    updateSingleBattle({ [field]: avatar });
+    setSingleBattle(prev => {
+      const name = field === "image1" ? prev.name1 : prev.name2;
+      if (prev[field] || name.replace("@", "").trim().toLowerCase() !== cleanUsername.toLowerCase()) return prev;
+      return { ...prev, [field]: avatar };
+    });
   }
 
   async function autoFillBattleAvatar(
@@ -712,7 +868,7 @@ export default function BattleGeneratorPage() {
 
   async function makePosterBlob(battle: Battle) {
     const node = posterRefs.current[battle.id];
-    if (!node) return null;
+    if (!node) { setExportStatus("The poster preview is not ready yet."); return null; }
 
     try {
       await waitForPosterAssets(node);
@@ -726,9 +882,11 @@ export default function BattleGeneratorPage() {
         fontEmbedCSS,
       });
 
+      if (!blob) setExportStatus("The poster could not be generated.");
       return blob;
     } catch (err) {
       console.error("POSTER EXPORT ERROR:", err);
+      setExportStatus("The poster could not be exported. Check the image and try again.");
       return null;
     }
   }
@@ -743,6 +901,7 @@ export default function BattleGeneratorPage() {
   }
 
   async function downloadSinglePoster() {
+    setExportStatus("Preparing poster...");
     const battle: Battle = {
       ...singleBattle,
       manager: BRAND.manager,
@@ -768,6 +927,7 @@ export default function BattleGeneratorPage() {
     const blob = await makePosterBlob(battle);
     if (!blob) return;
     saveAs(blob, getPosterFileName(battle));
+    setExportStatus("Poster generated. Your download has started.");
   }
 
   async function downloadAllPosters() {
@@ -783,6 +943,7 @@ export default function BattleGeneratorPage() {
 
     const zipBlob = await zip.generateAsync({ type: "blob" });
     saveAs(zipBlob, BRAND.zipName);
+    setExportStatus("Poster ZIP generated. Your download has started.");
   }
 
   async function downloadSelectedPoster() {
@@ -904,136 +1065,6 @@ export default function BattleGeneratorPage() {
           className="hidden"
           onChange={(e) => handleImageUpload(e, battle.id, field, single)}
         />
-      </div>
-    );
-  }
-
-  function PosterPreview({
-    battle,
-    scale = 0.5,
-  }: {
-    battle: Battle;
-    scale?: number;
-  }) {
-    const combinedDateTime =
-      battle.date && battle.time
-        ? `${battle.date} | ${battle.time}`
-        : battle.date || battle.time;
-
-    return (
-      <div className="w-[540px] h-[540px] max-w-full overflow-hidden mx-auto bg-[#fff8ea] rounded-lg">
-        <div
-          style={{
-            transform: `scale(${scale})`,
-            transformOrigin: "top left",
-          }}
-        >
-          <div
-            ref={(el) => {
-              posterRefs.current[battle.id] = el;
-            }}
-            className="poster-export relative w-[1080px] h-[1090px] overflow-hidden bg-[#fff8ea]"
-          >
-            <img
-              src={BRAND.posterBackground}
-              className="absolute inset-0 w-full h-full object-cover"
-              alt=""
-            />
-
-            {battle.image1 && (
-              <img
-                crossOrigin="anonymous"
-                src={battle.image1}
-                className="absolute left-[176px] top-[397px] w-[195px] h-[195px] rounded-full object-cover"
-                alt=""
-              />
-            )}
-
-            {battle.image2 && (
-              <img
-                crossOrigin="anonymous"
-                src={battle.image2}
-                className="absolute left-[672px] top-[397px] w-[195px] h-[195px] rounded-full object-cover"
-                alt=""
-              />
-            )}
-
-            {battle.name1 && (
-              <div
-                className="absolute left-[52px] top-[595px] w-[450px] h-[80px] flex items-center justify-center text-[#934918]"
-                style={{
-                  fontFamily: POSTER_NAME_FONT,
-                  fontWeight: 900,
-                  WebkitTextStroke: "0px transparent",
-                  textShadow: "none",
-                  letterSpacing: "-1px",
-                  fontSize: `clamp(
-                    26px,
-                    ${70 - battle.name1.length * 1.1}px,
-                    26px
-                  )`,
-                }}
-              >
-                <span className="leading-none">
-                  {battle.name1.toUpperCase()}
-                </span>
-              </div>
-            )}
-
-            {battle.name2 && (
-              <div
-                className="absolute left-[547px] top-[595px] w-[450px] h-[80px] flex items-center justify-center text-[#934918]"
-                style={{
-                  fontFamily: POSTER_NAME_FONT,
-                  fontWeight: 900,
-                  WebkitTextStroke: "0px transparent",
-                  textShadow: "none",
-                  letterSpacing: "-1px",
-                  fontSize: `clamp(
-                    26px,
-                    ${70 - battle.name2.length * 1.1}px,
-                    26px
-                  )`,
-                }}
-              >
-                <span className="leading-none">
-                  {battle.name2.toUpperCase()}
-                </span>
-              </div>
-            )}
-
-            {combinedDateTime && (
-              <div
-                className="absolute top-[690px] left-[90px] w-[900px] h-[90px] flex items-center justify-center overflow-hidden text-[#ffc83d]"
-                style={{
-                  fontFamily: POSTER_DATE_FONT,
-                  fontWeight: 900,
-                  WebkitTextStroke: "6px #934918",
-                  paintOrder: "stroke fill",
-                  textShadow: "2px 2px 0px #934918",
-                  letterSpacing: "1px",
-                  fontSize: `clamp(
-                    32px,
-                    ${62 - combinedDateTime.length * 1.05}px,
-                    58px
-                  )`,
-                }}
-              >
-                <span
-                  className="text-center whitespace-nowrap"
-                  style={{
-                    lineHeight: "1.15",
-                    display: "block",
-                    paddingTop: "8px",
-                    transform: "translateY(0px)",
-                  }}
-                >
-                  {combinedDateTime.toUpperCase()}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
       </div>
     );
   }
@@ -1163,7 +1194,7 @@ export default function BattleGeneratorPage() {
               LIVE TEMPLATE PREVIEW
             </div>
 
-            <PosterPreview battle={previewBattle} />
+            <PosterPreview layoutEditor={layoutEditor} selectedElement={selectedElement} setSelectedElement={setSelectedElement} posterRefs={posterRefs} battle={previewBattle} />
           </div>
         </section>
       );
@@ -1177,7 +1208,7 @@ export default function BattleGeneratorPage() {
               BLANK TEMPLATE PREVIEW
             </div>
 
-            <PosterPreview battle={blankPreviewBattle} />
+            <PosterPreview layoutEditor={layoutEditor} selectedElement={selectedElement} setSelectedElement={setSelectedElement} posterRefs={posterRefs} battle={blankPreviewBattle} />
           </div>
         </section>
       );
@@ -1201,7 +1232,7 @@ export default function BattleGeneratorPage() {
               {battle.name2 || "CREATOR 2"}
             </div>
 
-            <PosterPreview battle={battle} />
+            <PosterPreview layoutEditor={layoutEditor} selectedElement={selectedElement} setSelectedElement={setSelectedElement} posterRefs={posterRefs} battle={battle} />
           </button>
         ))}
       </section>
@@ -1258,6 +1289,40 @@ export default function BattleGeneratorPage() {
           </a>
         </div>
 
+        <section className="bg-white/65 border border-[#e6a52b]/45 rounded-lg p-5 space-y-4">
+          <div className="flex flex-wrap gap-3 items-center">
+            <label className="font-bold">Poster preset <select aria-label="Poster preset" disabled={!layoutEditor.ready} value={layoutEditor.presetId} onChange={e => layoutEditor.select(e.target.value)} className="border rounded p-2 ml-2">
+              {layoutEditor.presets.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select></label>
+            <button type="button" disabled={!layoutEditor.ready} onClick={() => setEditingLayout(v => !v)} className="bg-[#f4aa24] text-[#783e12] font-black px-4 py-3 rounded-lg">{editingLayout ? "Close layout editor" : "Edit template layout"}</button>
+          </div>
+          {editingLayout && <div className="space-y-4">
+            <p>Choose a box or drag it on the poster. Resize using its corners. Arrow keys move the focused box; hold Shift for 10px. Save to keep this layout on this browser.</p>
+            <div className="flex flex-wrap gap-3 items-center">
+              <label>Preset name <input aria-label="Preset name" value={layoutEditor.name} onChange={e => layoutEditor.setName(e.target.value)} className="border rounded p-2" /></label>
+              <label>Element <select aria-label="Layout element" value={selectedElement} onChange={e => setSelectedElement(e.target.value as ElementKey)} className="border rounded p-2">
+                {(Object.keys(ELEMENT_LABELS) as ElementKey[]).map(key => <option key={key} value={key}>{ELEMENT_LABELS[key]}</option>)}
+              </select></label>
+              {(["x", "y", "width", "height"] as const).map(field => <label key={field}>{field}<input aria-label={`Element ${field}`} type="number" value={layoutEditor.layout[selectedElement][field]} onChange={e => { if (e.target.value !== "") layoutEditor.update(selectedElement, { [field]: Number(e.target.value) }); }} className="border rounded p-2 w-24 ml-1" /></label>)}
+              <button type="button" onClick={() => layoutEditor.save()} className="bg-[#f4aa24] rounded p-3 font-bold">Save preset</button>
+              <button type="button" onClick={() => layoutEditor.save(true)} className="border rounded p-3 font-bold">Save as new preset</button>
+              <button type="button" onClick={layoutEditor.remove} className="border border-red-700 text-red-800 rounded p-3">Delete preset</button>
+              <button type="button" onClick={layoutEditor.reset} className="border rounded p-3">Reset layout</button>
+            </div>
+            <div className="flex flex-wrap gap-4 items-center">
+              <label>Background <select aria-label="Poster background" value={layoutEditor.background.startsWith("data:") ? "custom" : layoutEditor.background} onChange={e => { if (e.target.value !== "custom") layoutEditor.changeBackground(e.target.value); }} className="border rounded p-2 ml-2">
+                <option value="/posters/honeybloom/background.png">Honey Bloom poster</option>
+                <option value="/honeybloom/poster-background.jpg">Golden honeycomb</option>
+                {layoutEditor.background.startsWith("data:") && <option value="custom">Uploaded background</option>}
+              </select></label>
+              <label>Upload background <input aria-label="Upload poster background" type="file" accept="image/png,image/jpeg,image/webp" onChange={e => { const file = e.target.files?.[0]; if (file) layoutEditor.uploadBackground(file); e.target.value = ""; }} className="ml-2" /></label>
+              <p className="text-sm">PNG, JPG or WebP, up to 2 MB. Saved with this preset.</p>
+            </div>            <FontEditor editor={layoutEditor} selected={selectedElement} />
+            <div className="overflow-auto"><div className="min-w-[540px]"><PosterPreview layoutEditor={layoutEditor} selectedElement={selectedElement} setSelectedElement={setSelectedElement} posterRefs={posterRefs} battle={activeMode === "single" ? singleBattle : selectedBattle || blankPreviewBattle} editable /></div></div>
+          </div>}
+          <p role="status">{layoutEditor.status}</p>
+          <p role="status">{exportStatus}</p>
+        </section>
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
             <h1 className="text-[#783e12] text-3xl font-black tracking-[0.18em] uppercase">

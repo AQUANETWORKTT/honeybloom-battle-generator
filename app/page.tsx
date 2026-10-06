@@ -45,7 +45,7 @@ export default function HomePage() {
 
       <div className="relative z-10 mx-auto flex min-h-[calc(100vh-80px)] w-full max-w-5xl flex-col items-center justify-center text-center">
         <img
-          src="/honeybloom-logo.png"
+          src="/honeybloom-logo.png?v=gold"
           alt="Honeybloom Agency"
           className="mb-8 w-full max-w-[380px]"
         />

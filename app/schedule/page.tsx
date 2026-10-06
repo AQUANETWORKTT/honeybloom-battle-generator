@@ -150,7 +150,7 @@ function SchedulePoster({
       className="relative mx-auto min-h-screen w-full max-w-[900px] overflow-visible px-3 pb-10 pt-0 sm:px-4"
     >
       <img
-        src="/honeybloom-logo.png"
+        src="/honeybloom-logo.png?v=gold"
         alt="Honey Bloom Agency"
         className="mx-auto mb-0 w-[90vw] max-w-[650px] object-contain drop-shadow-[0_12px_22px_rgba(0,0,0,0.85)]"
       />
