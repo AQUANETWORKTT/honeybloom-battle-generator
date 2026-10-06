@@ -1291,22 +1291,22 @@ export default function BattleGeneratorPage() {
 
         <section className="bg-white/65 border border-[#e6a52b]/45 rounded-lg p-5 space-y-4">
           <div className="flex flex-wrap gap-3 items-center">
-            <label className="font-bold">Poster preset <select aria-label="Poster preset" disabled={!layoutEditor.ready} value={layoutEditor.presetId} onChange={e => layoutEditor.select(e.target.value)} className="border rounded p-2 ml-2">
-              {layoutEditor.presets.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            <label className="font-bold">Poster preset <select aria-label="Poster preset" disabled={!layoutEditor.ready || layoutEditor.busy} value={layoutEditor.presetId} onChange={e => layoutEditor.select(e.target.value)} className="border rounded p-2 ml-2">
+              {layoutEditor.presets.map(p => <option key={p.id} value={p.id}>{p.name}{p.id.startsWith("local-") ? " (save to share)" : ""}</option>)}
             </select></label>
             <button type="button" disabled={!layoutEditor.ready} onClick={() => setEditingLayout(v => !v)} className="bg-[#f4aa24] text-[#783e12] font-black px-4 py-3 rounded-lg">{editingLayout ? "Close layout editor" : "Edit template layout"}</button>
           </div>
           {editingLayout && <div className="space-y-4">
-            <p>Choose a box or drag it on the poster. Resize using its corners. Arrow keys move the focused box; hold Shift for 10px. Save to keep this layout on this browser.</p>
+            <p>Choose a box or drag it on the poster. Resize using its corners. Arrow keys move the focused box; hold Shift for 10px. Save to publish this preset to Honey Bloom across browsers and devices.</p>
             <div className="flex flex-wrap gap-3 items-center">
               <label>Preset name <input aria-label="Preset name" value={layoutEditor.name} onChange={e => layoutEditor.setName(e.target.value)} className="border rounded p-2" /></label>
               <label>Element <select aria-label="Layout element" value={selectedElement} onChange={e => setSelectedElement(e.target.value as ElementKey)} className="border rounded p-2">
                 {(Object.keys(ELEMENT_LABELS) as ElementKey[]).map(key => <option key={key} value={key}>{ELEMENT_LABELS[key]}</option>)}
               </select></label>
               {(["x", "y", "width", "height"] as const).map(field => <label key={field}>{field}<input aria-label={`Element ${field}`} type="number" value={layoutEditor.layout[selectedElement][field]} onChange={e => { if (e.target.value !== "") layoutEditor.update(selectedElement, { [field]: Number(e.target.value) }); }} className="border rounded p-2 w-24 ml-1" /></label>)}
-              <button type="button" onClick={() => layoutEditor.save()} className="bg-[#f4aa24] rounded p-3 font-bold">Save preset</button>
-              <button type="button" onClick={() => layoutEditor.save(true)} className="border rounded p-3 font-bold">Save as new preset</button>
-              <button type="button" onClick={layoutEditor.remove} className="border border-red-700 text-red-800 rounded p-3">Delete preset</button>
+              <button type="button" disabled={layoutEditor.busy} onClick={() => void layoutEditor.save()} className="bg-[#f4aa24] rounded p-3 font-bold">Save preset</button>
+              <button type="button" disabled={layoutEditor.busy} onClick={() => void layoutEditor.save(true)} className="border rounded p-3 font-bold">Save as new preset</button>
+              <button type="button" disabled={layoutEditor.busy} onClick={() => void layoutEditor.remove()} className="border border-red-700 text-red-800 rounded p-3">Delete preset</button>
               <button type="button" onClick={layoutEditor.reset} className="border rounded p-3">Reset layout</button>
             </div>
             <div className="flex flex-wrap gap-4 items-center">
@@ -1316,7 +1316,7 @@ export default function BattleGeneratorPage() {
                 {layoutEditor.background.startsWith("data:") && <option value="custom">Uploaded background</option>}
               </select></label>
               <label>Upload background <input aria-label="Upload poster background" type="file" accept="image/png,image/jpeg,image/webp" onChange={e => { const file = e.target.files?.[0]; if (file) layoutEditor.uploadBackground(file); e.target.value = ""; }} className="ml-2" /></label>
-              <p className="text-sm">PNG, JPG or WebP, up to 2 MB. Saved with this preset.</p>
+              <p className="text-sm">PNG, JPG or WebP, up to 2 MB. Saved publicly with this preset.</p>
             </div>            <FontEditor editor={layoutEditor} selected={selectedElement} />
             <div className="overflow-auto"><div className="min-w-[540px]"><PosterPreview layoutEditor={layoutEditor} selectedElement={selectedElement} setSelectedElement={setSelectedElement} posterRefs={posterRefs} battle={activeMode === "single" ? singleBattle : selectedBattle || blankPreviewBattle} editable /></div></div>
           </div>}

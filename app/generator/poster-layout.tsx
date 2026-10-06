@@ -1,74 +1,12 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState } from "react";
 import { Rnd } from "react-rnd";
 
-export const ELEMENT_LABELS = { avatar1: "Creator 1 photo", avatar2: "Creator 2 photo", username1: "Creator 1 name", username2: "Creator 2 name", date: "Date and time" };
-export type ElementKey = keyof typeof ELEMENT_LABELS;
-type Box = { x: number; y: number; width: number; height: number };
-export type PosterLayout = Record<ElementKey, Box>;
-export type TextKey = "username1" | "username2" | "date";
-type TextSettings = { fontFamily: string; fontSize: number; fontWeight: number; color: string; strokeColor: string; strokeWidth: number; letterSpacing: number; shadowColor: string; shadowX: number; shadowY: number; shadowBlur: number; uppercase: boolean };
-type Typography = Record<TextKey, TextSettings>;
-export const FONT_OPTIONS = ["Poster Cooper Black", "Poster Luckiest Guy", "Norwester", "Impact", "Arial", "Georgia", "Times New Roman"];
-const nameStyle: TextSettings = { fontFamily: "Poster Cooper Black", fontSize: 0, fontWeight: 900, color: "#934918", strokeColor: "#934918", strokeWidth: 0, letterSpacing: -1, shadowColor: "#934918", shadowX: 0, shadowY: 0, shadowBlur: 0, uppercase: true };
-const DEFAULT_TYPOGRAPHY: Typography = { username1: nameStyle, username2: { ...nameStyle }, date: { ...nameStyle, fontFamily: "Poster Luckiest Guy", color: "#ffc83d", strokeWidth: 6, letterSpacing: 1, shadowX: 2, shadowY: 2 } };
-type Preset = { id: string; name: string; layout: PosterLayout; background: string; typography: Typography };
-export const DEFAULT_LAYOUT: PosterLayout = {
-  avatar1: { x: 176, y: 397, width: 195, height: 195 },
-  avatar2: { x: 672, y: 397, width: 195, height: 195 },
-  username1: { x: 52, y: 595, width: 450, height: 80 },
-  username2: { x: 547, y: 595, width: 450, height: 80 },
-  date: { x: 90, y: 690, width: 900, height: 90 },
-};
-const STORAGE_KEY = "honeybloom-poster-layout-presets-v1";
-export const DEFAULT_BACKGROUND = "/posters/honeybloom/background.png";
-const initialPreset: Preset = { id: "local-default", name: "Honey Bloom default", layout: DEFAULT_LAYOUT, background: DEFAULT_BACKGROUND, typography: DEFAULT_TYPOGRAPHY };
-function normalizeTypography(value: unknown): Typography {
-  const result = {} as Typography;
-  const input = value && typeof value === "object" ? value as Partial<Typography> : {};
-  for (const key of Object.keys(DEFAULT_TYPOGRAPHY) as TextKey[]) {
-    const defaults = DEFAULT_TYPOGRAPHY[key];
-    const item = input[key];
-    const settings = { ...defaults };
-    if (item && typeof item === "object") {
-      for (const field of ["fontSize", "fontWeight", "strokeWidth", "letterSpacing", "shadowX", "shadowY", "shadowBlur"] as const) {
-        const n = item[field];
-        if (typeof n === "number" && Number.isFinite(n)) settings[field] = Math.max(field === "letterSpacing" || field === "shadowX" || field === "shadowY" ? -100 : 0, Math.min(field === "fontWeight" ? 900 : 300, n));
-      }
-      for (const field of ["color", "strokeColor", "shadowColor"] as const) if (typeof item[field] === "string" && /^#[0-9a-f]{6}$/i.test(item[field])) settings[field] = item[field];
-      if (FONT_OPTIONS.includes(item.fontFamily)) settings.fontFamily = item.fontFamily;
-      if (typeof item.uppercase === "boolean") settings.uppercase = item.uppercase;
-    }
-    result[key] = settings;
-  }
-  return result;
-}
-export function textStyle(settings: TextSettings): CSSProperties {
-  return { fontFamily: `"${settings.fontFamily}", Arial, sans-serif`, fontWeight: settings.fontWeight, color: settings.color, WebkitTextStroke: `${settings.strokeWidth}px ${settings.strokeColor}`, paintOrder: "stroke fill", letterSpacing: `${settings.letterSpacing}px`, textShadow: `${settings.shadowX}px ${settings.shadowY}px ${settings.shadowBlur}px ${settings.shadowColor}`, ...(settings.fontSize > 0 ? { fontSize: settings.fontSize } : {}) };
-}
-function normalizeBackground(value: unknown) {
-  return typeof value === "string" && (value === DEFAULT_BACKGROUND || value === "/honeybloom/poster-background.jpg" || /^data:image\/(png|jpeg|webp);base64,/.test(value)) ? value : DEFAULT_BACKGROUND;
-}
-
-export function normalizeLayout(value: unknown): PosterLayout {
-  const result = {} as PosterLayout;
-  const input = value && typeof value === "object" ? value as Partial<PosterLayout> : {};
-  for (const key of Object.keys(DEFAULT_LAYOUT) as ElementKey[]) {
-    const box = input[key];
-    const fallback = DEFAULT_LAYOUT[key];
-    const number = (field: keyof Box) => typeof box?.[field] === "number" && Number.isFinite(box[field]) ? box[field] : fallback[field];
-    const width = Math.max(20, Math.min(1080, number("width")));
-    const height = Math.max(20, Math.min(1090, number("height")));
-    result[key] = { width, height, x: Math.max(0, Math.min(1080 - width, number("x"))), y: Math.max(0, Math.min(1090 - height, number("y"))) };
-  }
-  return result;
-}
-
-export function boxStyle(layout: PosterLayout, key: ElementKey) {
-  const box = layout[key];
-  return { left: box.x, top: box.y, width: box.width, height: box.height };
-}
+import { ELEMENT_LABELS, FONT_OPTIONS, DEFAULT_LAYOUT, DEFAULT_BACKGROUND, initialPreset, STORAGE_KEY, normalizeLayout, normalizeBackground, normalizeTypography, type Preset, type ElementKey, type TextKey, type PosterLayout } from "./poster-preset";
+export { boxStyle, ELEMENT_LABELS, textStyle, type ElementKey } from "./poster-preset";
+type Box = PosterLayout[ElementKey];
+type TextSettings = Preset["typography"][TextKey];
 
 export function usePosterLayout() {
   const [presets, setPresets] = useState<Preset[]>([initialPreset]);
@@ -76,55 +14,93 @@ export function usePosterLayout() {
   const [layout, setLayout] = useState(DEFAULT_LAYOUT);
   const [name, setName] = useState(initialPreset.name);
   const [background, setBackground] = useState(DEFAULT_BACKGROUND);
-  const [typography, setTypography] = useState(DEFAULT_TYPOGRAPHY);
+  const [typography, setTypography] = useState(initialPreset.typography);
   const [ready, setReady] = useState(false);
   const [status, setStatus] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [sharedAvailable, setSharedAvailable] = useState(false);
   useEffect(() => {
     let cancelled = false;
-    queueMicrotask(() => {
-    if (cancelled) return;
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const saved = JSON.parse(raw);
-        const restored: Preset[] = Array.isArray(saved.presets) ? saved.presets.filter((p: Preset) => p && typeof p.id === "string" && typeof p.name === "string").map((p: Preset) => ({ id: p.id, name: p.name, layout: normalizeLayout(p.layout), background: normalizeBackground(p.background), typography: normalizeTypography(p.typography) })) : [];
-        if (restored.length) {
-          const active = restored.find(p => p.id === saved.selectedId) || restored[0];
-          setPresets(restored); setPresetId(active.id); setLayout(active.layout); setName(active.name); setBackground(active.background); setTypography(active.typography);
+    async function load() {
+      let restored: Preset[] = [];
+      let selectedId = "";
+      try {
+        const raw = window.localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const cached = JSON.parse(raw);
+          selectedId = cached.selectedId;
+          restored = Array.isArray(cached.presets) ? cached.presets.filter((p: Preset) => p && typeof p.id === "string" && typeof p.name === "string").map((p: Preset) => ({ ...p, layout: normalizeLayout(p.layout), background: normalizeBackground(p.background), typography: normalizeTypography(p.typography) })) : [];
         }
+      } catch { /* Shared storage works even if browser storage is disabled. */ }
+      try {
+        const response = await fetch("/api/honeybloom-presets", { cache: "no-store" });
+        const result = await response.json();
+        if (!response.ok || !Array.isArray(result.presets)) throw new Error(result.error || "Could not load shared presets.");
+        const shared = result.presets as Preset[];
+        restored = [initialPreset, ...restored.filter(p => p.id.startsWith("local-") && p.id !== initialPreset.id), ...shared];
+        if (!cancelled) { setSharedAvailable(true); setStatus("Honey Bloom shared presets loaded."); }
+      } catch {
+        if (!cancelled) setStatus("Shared presets could not be loaded. Cached presets are available; saving will retry online.");
       }
-    } catch { setStatus("Saved layouts could not be loaded. The original layout is available."); }
-    setReady(true);
-    });
+      if (cancelled) return;
+      if (!restored.length) restored = [initialPreset];
+      const active = restored.find(p => p.id === selectedId) || restored.find(p => !p.id.startsWith("local-")) || restored[0];
+      setPresets(restored); setPresetId(active.id); setLayout(active.layout); setName(active.name); setBackground(active.background); setTypography(active.typography);
+      setReady(true);
+    }
+    void load();
     return () => { cancelled = true; };
   }, []);
   function persist(next: Preset[], selectedId: string) {
-    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ presets: next, selectedId })); return true; }
-    catch { setStatus("Browser storage is unavailable. Your layout is usable now, but could not be saved."); return false; }
+    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ presets: next, selectedId })); }
+    catch { /* Browser cache is optional; shared storage is authoritative. */ }
   }
   function select(id: string) {
     const preset = presets.find(p => p.id === id);
     if (!preset) return;
     setPresetId(id); setName(preset.name); setLayout(preset.layout); setBackground(preset.background); setTypography(preset.typography);
-    if (persist(presets, id)) setStatus(`Loaded ${preset.name}.`);
+    persist(presets, id);
+    setStatus(id.startsWith("local-") ? `Loaded ${preset.name}. Save to publish it to Honey Bloom.` : `Loaded ${preset.name}.`);
   }
-  function save(asNew = false) {
+  async function save(asNew = false) {
+    if (busy) return;
     if (!name.trim()) { setStatus("Enter a preset name first."); return; }
-    const id = asNew ? `local-${crypto.randomUUID()}` : presetId;
+    setBusy(true); setStatus("Saving shared Honey Bloom preset...");
+    const id = asNew || presetId.startsWith("local-") ? crypto.randomUUID() : presetId;
     const preset = { id, name: name.trim(), layout: normalizeLayout(layout), background, typography: normalizeTypography(typography) };
-    const next = asNew ? [...presets, preset] : presets.map(p => p.id === id ? preset : p);
-    if (!persist(next, id)) return;
-    setPresets(next); setPresetId(id); setLayout(preset.layout);
-    setStatus(`Saved ${preset.name} on this browser.`);
+    try {
+      const response = await fetch("/api/honeybloom-presets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ preset }) });
+      const result = await response.json();
+      if (!response.ok || !result.preset) throw new Error(result.error || "Could not publish this preset.");
+      const saved = result.preset as Preset;
+      let next = presets.filter(p => p.id !== saved.id && (asNew || p.id !== presetId || p.id === initialPreset.id));
+      next = [...next, saved];
+      persist(next, saved.id);
+      setPresets(next); setPresetId(saved.id); setLayout(saved.layout); setTypography(saved.typography); setSharedAvailable(true);
+      setStatus(`Saved ${saved.name} publicly to Honey Bloom. Available across browsers and devices.`);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Could not save publicly. Your changes are still in the editor.");
+    } finally { setBusy(false); }
   }
-  function remove() {
-    const remaining = presets.filter(p => p.id !== presetId);
-    const next = remaining.length ? remaining : [initialPreset];
-    const active = next[0];
-    if (!persist(next, active.id)) return;
-    setPresets(next); setPresetId(active.id); setLayout(active.layout); setName(active.name); setBackground(active.background); setTypography(active.typography);
-    setStatus(remaining.length ? "Preset deleted." : "Preset deleted. The original default is available.");
+  async function remove() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      if (!presetId.startsWith("local-")) {
+        const response = await fetch("/api/honeybloom-presets", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: presetId }) });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Could not delete the shared preset.");
+      }
+      const remaining = presets.filter(p => p.id !== presetId);
+      const next = remaining.length ? remaining : [initialPreset];
+      const active = next.find(p => !p.id.startsWith("local-")) || next[0];
+      persist(next, active.id);
+      setPresets(next); setPresetId(active.id); setLayout(active.layout); setName(active.name); setBackground(active.background); setTypography(active.typography);
+      setStatus(presetId.startsWith("local-") ? "Browser preset removed." : "Shared Honey Bloom preset deleted.");
+    } catch (error) { setStatus(error instanceof Error ? error.message : "Could not delete this preset."); }
+    finally { setBusy(false); }
   }
+
   function update(key: ElementKey, patch: Partial<Box>) {
     if (key.startsWith("avatar") && (patch.width !== undefined || patch.height !== undefined)) {
       const size = patch.width ?? patch.height;
@@ -136,7 +112,7 @@ export function usePosterLayout() {
   function changeBackground(value: string) { setBackground(normalizeBackground(value)); setStatus("Unsaved background — save this preset to keep it."); }
   function uploadBackground(file: File) {
     if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) { setStatus("Choose a PNG, JPG or WebP background."); return; }
-    if (file.size > 2 * 1024 * 1024) { setStatus("Choose a background under 2 MB so it can be saved in this browser."); return; }
+    if (file.size > 2 * 1024 * 1024) { setStatus("Choose a background under 2 MB."); return; }
     const reader = new FileReader();
     reader.onload = () => changeBackground(String(reader.result));
     reader.onerror = () => setStatus("Could not read that background image.");
@@ -146,7 +122,7 @@ export function usePosterLayout() {
     setTypography(prev => normalizeTypography({ ...prev, [key]: { ...prev[key], ...patch } }));
     setStatus("Unsaved text changes — save this preset to keep them.");
   }
-  return { presets, presetId, layout, name, setName, background, changeBackground, uploadBackground, typography, updateText, ready, status, select, save, remove, update, reset: () => { setLayout(DEFAULT_LAYOUT); setStatus("Original layout restored. Save to keep it."); } };
+  return { presets, presetId, layout, name, setName, background, changeBackground, uploadBackground, typography, updateText, busy, sharedAvailable, ready, status, select, save, remove, update, reset: () => { setLayout(DEFAULT_LAYOUT); setStatus("Original layout restored. Save to keep it."); } };
 }
 
 export function FontEditor({ editor, selected }: { editor: ReturnType<typeof usePosterLayout>; selected: ElementKey }) {
